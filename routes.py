@@ -4,118 +4,97 @@ from twilio.twiml.voice_response import VoiceResponse, Gather, Record, Redirect
 
 app = Flask(__name__)
 
-@app.route('/get_rose', methods=['GET', 'POST'])
-def get_rose(response):
-    import ipdb; ipdb.set_trace()
-    print('response: ', response)
 
-    # response = VoiceResponse()
-    response.say('Tell me your rose for today?')
-    response.record(transcribe=True,
-                timeout=3, 
-                maxLength=20,
-                action="https://02f04349c1e3.ngrok.io/test_action",
-                transcribeCallback="https://02f04349c1e3.ngrok.io/handle_transcription")
+def internal_redirect():
+    response = VoiceResponse()
+    response.say("Returning to the main menu")
+    response.redirect('https://b499c6e58fea.ngrok.io/welcome')
 
-    return response
-    # return internal_redirect()
+    return twiml(response)
 
-@app.route('/rate', methods=['GET', 'POST'])
-def console():
-    resp = VoiceResponse()
-    req = request
-    print('req', req)
-    return req.values
 
-@app.route('/test_action', methods=['GET', 'POST'])
-def text():
-    print('in /test_action')
-    recording_sid = request.form['RecordingSid']
-    print('recording sid: ', recording_sid)
+def twiml(resp):
+    resp = flask.Response(str(resp))
+    resp.headers['Content-Type'] = 'text/xml'
 
-    return str(recording_sid)
+    return resp
 
-@app.route('/handle_transcription', methods=['GET', 'POST'])
-def transcription():
+
+@app.route('/rose_transcription', methods=['POST'])
+def rose_transcription():
     text = request.form['TranscriptionText']
-    print('text: ', text)
-    return str(text)
+    print('rose text: ', text)
+
+    return twiml(text)
+
+
+@app.route('/thorn_transcription', methods=['POST'])
+def thorn_transcription():
+    text = request.form['TranscriptionText']
+    print('thorn text: ', text)
+
+    return twiml(text)
 
 
 @app.route('/welcome', methods=['POST'])
 def welcome():
     response = VoiceResponse()
     with response.gather(
-        num_digits=1, action='https://02f04349c1e3.ngrok.io/menu', method="POST"
+        num_digits=1,
+        action='https://b499c6e58fea.ngrok.io/menu',
+        method="POST"
     ) as g:
         g.say(message="This is roses and thorns " +
-              "Please press 1 for your rose" +
-              "Please press 2 for your thorn" +
-              "Press 3 to rate your day")
+              "Press 1 to leave your roses")
+
     return twiml(response)
 
 @app.route('/menu', methods=['POST'])
 def menu():
     selected_option = request.form['Digits']
-    print('selected_option: ', selected_option)
 
-    if selected_option == '1':
-        # import ipdb; ipdb.set_trace()
+    if (selected_option == '1'):
         response = VoiceResponse()
-        get_rose(response)
-        return twiml(response)
-        # response.say("I'd love to hear your rose")
-        # response.redirect('https://02f04349c1e3.ngrok.io/get_rose')
+        rose = get_rose(response)
+        print('in menu -> rose: ', rose)
+    else:
+        response = VoiceResponse()
+        thorn = get_thorn(response)
+        print('in menu -> thorn: ', thorn)
 
-    # elif selected_option == '2':
-    #     # tbd
-    # elif selected_option == '3':
-    #     # tbd
-    # else:
-    #     resp.say("Try again.")
-
-    return internal_redirect()
-
-def get_transcription(transcription_id):
-    transcription = client.transcriptions(transcription_id).fetch()
-    
-    print(transcription.transcription_text)
-
-def twiml(resp):
-    resp = flask.Response(str(resp))
-    resp.headers['Content-Type'] = 'text/xml'
-    return resp
-
-def rate():
-    resp = VoiceResponse()
-    gather = Gather(input='dtmf speech', num_digits=1, action='https://238d3bd215ade4a7f804504c20dba0aa.m.pipedream.net')
-    gather.say('Rate the day from 1 to 5')
-    resp.append(gather) 
-    return internal_redirect()
+    return twiml(response)
 
 
-# def get_rose():
-#     resp = VoiceResponse()
+@app.route('/recordings', methods=['POST'])
+def recordings():
+    recording_sid = request.form['RecordingSid']
+    print('rec sid: ', recording_sid)
 
-#     resp.say('What\'s your rose today?')
-#     resp.redirect('https://02f04349c1e3.ngrok.io/get_rose')
-#     return internal_redirect()
+    return twiml(recording_sid)
 
 
-def get_thorn():
-    resp = VoiceResponse()
+def get_rose(response):
+    print('rose response: ', response)
 
-    resp.say('What\'s your thorn today?')
-    resp.record(transcribe=True,
-                timeout=3, 
-                maxLength=20,
-                action="https://02f04349c1e3.ngrok.io/test_action",
-                transcribeCallback="https://02f04349c1e3.ngrok.io/handle_transcription")
-    return redirect()
+    response.say('Tell me your rose for today?')
+    response.record(transcribe=True,
+                    timeout=3, 
+                    maxLength=20,
+                    # action="https://b499c6e58fea.ngrok.io/recordings",
+                    transcribeCallback="https://b499c6e58fea.ngrok.io/rose_transcription")
+    response.say('Bleep bloop test test test?')
 
-def internal_redirect():
-    response = VoiceResponse()
-    response.say("Returning to the main menu")
-    response.redirect('https://02f04349c1e3.ngrok.io/welcome')
+    return twiml(response)
+
+
+def get_thorn(response):
+    print('thorn response: ', response)
+
+    response.say('Tell me your thorn for today?')
+    response.record(transcribe=True,
+                    timeout=3, 
+                    maxLength=20,
+                    # action="https://b499c6e58fea.ngrok.io/recordings",
+                    transcribeCallback="https://b499c6e58fea.ngrok.io/thorn_transcription")
 
     return twiml(response)
