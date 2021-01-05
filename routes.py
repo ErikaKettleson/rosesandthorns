@@ -49,6 +49,7 @@ def welcome():
 
     return twiml(response)
 
+
 @app.route('/menu', methods=['POST'])
 def menu():
     selected_option = request.form['Digits']
@@ -73,6 +74,30 @@ def recordings():
     return twiml(recording_sid)
 
 
+@app.route('/trigger_thorn', methods=['POST'])
+def trigger_thorn():
+    response = VoiceResponse()
+    thorn = get_thorn(response)
+    print('in thorn: ', thorn)
+    return twiml(response)
+
+
+@app.route('/trigger_rating', methods=['POST'])
+def rate():
+    response = VoiceResponse()
+    get_rating(response)
+
+    return twiml(response)
+
+
+@app.route('/post_rating', methods=['POST'])
+def posting_rate():
+    rating = request.form['Digits']
+    # post rating
+
+    return str(rating)
+
+
 def get_rose(response):
     print('rose response: ', response)
 
@@ -80,9 +105,21 @@ def get_rose(response):
     response.record(transcribe=True,
                     timeout=3, 
                     maxLength=20,
-                    # action="https://b499c6e58fea.ngrok.io/recordings",
+                    action="https://b499c6e58fea.ngrok.io/trigger_thorn",
                     transcribeCallback="https://b499c6e58fea.ngrok.io/rose_transcription")
-    response.say('Bleep bloop test test test?')
+
+    return twiml(response)
+
+
+def get_rating(response):
+    print('in get rate', response)
+
+    gather = Gather(input='dtmf speech',
+                    num_digits=1,
+                    action="https://b499c6e58fea.ngrok.io/post_rating")
+
+    gather.say('Rate the day from 1 to 5')
+    response.append(gather)
 
     return twiml(response)
 
@@ -94,7 +131,7 @@ def get_thorn(response):
     response.record(transcribe=True,
                     timeout=3, 
                     maxLength=20,
-                    # action="https://b499c6e58fea.ngrok.io/recordings",
+                    action="https://b499c6e58fea.ngrok.io/trigger_rating",
                     transcribeCallback="https://b499c6e58fea.ngrok.io/thorn_transcription")
 
     return twiml(response)
