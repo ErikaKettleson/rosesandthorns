@@ -1,6 +1,9 @@
 from flask import Flask, request, redirect
 import flask
+import datetime
 from twilio.twiml.voice_response import VoiceResponse, Gather, Record, Redirect
+from model import db, User, Entries
+
 
 app = Flask(__name__)
 
@@ -8,7 +11,7 @@ app = Flask(__name__)
 def internal_redirect():
     response = VoiceResponse()
     response.say("Returning to the main menu")
-    response.redirect('https://b499c6e58fea.ngrok.io/welcome')
+    response.redirect('https://7f6e1c2ecb68.ngrok.io/welcome')
 
     return twiml(response)
 
@@ -22,15 +25,35 @@ def twiml(resp):
 
 @app.route('/rose_transcription', methods=['POST'])
 def rose_transcription():
+    # print(request.form)
+
     text = request.form['TranscriptionText']
+    rose_transcription_sid = request.form['TranscriptionSid']
+    rose_recording_sid = request.form['RecordingSid']
+    user = User.query.filter_by(phone_number=request.form['To']).first()
+
     print('rose text: ', text)
+
+    new_rose = Entries(
+            rose_transcription_sid=rose_transcription_sid,
+            rose_recording_sid=rose_recording_sid,
+            user_id=user.id
+            )
+
+    db.session.add(new_rose)
 
     return twiml(text)
 
 
 @app.route('/thorn_transcription', methods=['POST'])
 def thorn_transcription():
+    # print(request.form)
+    
     text = request.form['TranscriptionText']
+    thorn_transcription_sid = request.form['TranscriptionSid']
+    thorn_recording_sid = request.form['RecordingSid']
+    user_phone = request.form['To']
+    
     print('thorn text: ', text)
 
     return twiml(text)
@@ -41,11 +64,11 @@ def welcome():
     response = VoiceResponse()
     with response.gather(
         num_digits=1,
-        action='https://b499c6e58fea.ngrok.io/menu',
+        action='https://7f6e1c2ecb68.ngrok.io/menu',
         method="POST"
     ) as g:
         g.say(message="This is roses and thorns " +
-              "Press 1 to leave your roses")
+              "Press 1 to leave your roses and thorns")
 
     return twiml(response)
 
@@ -60,8 +83,9 @@ def menu():
         print('in menu -> rose: ', rose)
     else:
         response = VoiceResponse()
-        thorn = get_thorn(response)
-        print('in menu -> thorn: ', thorn)
+        response.say('Okay, feel free to call us at any time and \
+            leave your roses and thorns')
+        response.hangup()
 
     return twiml(response)
 
@@ -87,6 +111,8 @@ def rate():
     response = VoiceResponse()
     get_rating(response)
 
+    response.hangup()
+
     return twiml(response)
 
 
@@ -103,10 +129,10 @@ def get_rose(response):
 
     response.say('Tell me your rose for today?')
     response.record(transcribe=True,
-                    timeout=3, 
+                    timeout=3,
                     maxLength=20,
-                    action="https://b499c6e58fea.ngrok.io/trigger_thorn",
-                    transcribeCallback="https://b499c6e58fea.ngrok.io/rose_transcription")
+                    action="https://7f6e1c2ecb68.ngrok.io/trigger_thorn",
+                    transcribeCallback="https://7f6e1c2ecb68.ngrok.io/rose_transcription")
 
     return twiml(response)
 
@@ -116,7 +142,7 @@ def get_rating(response):
 
     gather = Gather(input='dtmf speech',
                     num_digits=1,
-                    action="https://b499c6e58fea.ngrok.io/post_rating")
+                    action="https://7f6e1c2ecb68.ngrok.io/post_rating")
 
     gather.say('Rate the day from 1 to 5')
     response.append(gather)
@@ -131,7 +157,7 @@ def get_thorn(response):
     response.record(transcribe=True,
                     timeout=3, 
                     maxLength=20,
-                    action="https://b499c6e58fea.ngrok.io/trigger_rating",
-                    transcribeCallback="https://b499c6e58fea.ngrok.io/thorn_transcription")
+                    action="https://7f6e1c2ecb68.ngrok.io/trigger_rating",
+                    transcribeCallback="https://7f6e1c2ecb68.ngrok.io/thorn_transcription")
 
     return twiml(response)
