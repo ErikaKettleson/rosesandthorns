@@ -1,7 +1,6 @@
 from sqlalchemy import Column, DateTime, String, Integer, ForeignKey, func
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy_utils import PhoneNumber
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
@@ -24,10 +23,6 @@ class User(db.Model):
         )
 
 
-#     user = User(phone_number=PhoneNumber('0401234567', 'FI'))
-#     user.phone_number.e164  # u'+358401234567'
-
-
 class Entries(db.Model):
     __tablename__ = "entries"
 
@@ -35,6 +30,7 @@ class Entries(db.Model):
                            autoincrement=True,
                            primary_key=True
                            )
+    call_sid = db.Column(db.String)
     date = Column(DateTime, default=func.now())
     rose_transcription_sid = db.Column(db.String)
     rose_recording_sid = db.Column(db.String)
@@ -46,9 +42,10 @@ class Entries(db.Model):
     users = db.relationship('User')
 
     def __repr__(self):
-        return '<Entries entries_id=%s thorn_transcription_sid=%s thorn_recording_sid=%s \
+        return '<Entries entries_id=%s call_sid=%s thorn_transcription_sid=%s thorn_recording_sid=%s \
             rose_transcription_sid=%s rose_recording_sid=%s rating=%s date=%s user_id=%s>' % (
             self.entries_id,
+            self.call_sid,
             self.rose_transcription_sid,
             self.rose_recording_sid,
             self.thorn_transcription_sid,
