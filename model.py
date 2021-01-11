@@ -31,25 +31,25 @@ class Entries(db.Model):
                            primary_key=True
                            )
     call_sid = db.Column(db.String)
-    date = Column(DateTime, default=func.now())
-    rose_transcription_sid = db.Column(db.String)
-    rose_recording_sid = db.Column(db.String)
     thorn_transcription_sid = db.Column(db.String)
     thorn_recording_sid = db.Column(db.String)
+    rose_transcription_sid = db.Column(db.String)
+    rose_recording_sid = db.Column(db.String)
     rating = db.Column(db.Integer)
+    date = Column(DateTime, default=func.now())
     user_id = db.Column(db.Integer,
                         db.ForeignKey('users.user_id'))
     users = db.relationship('User')
 
     def __repr__(self):
-        return '<Entries entries_id=%s call_sid=%s thorn_transcription_sid=%s thorn_recording_sid=%s \
+        return '<Entries entries_id=%s call_sid=%s thorn_transcription_sid=%s thorn_recording_sid=%s\
             rose_transcription_sid=%s rose_recording_sid=%s rating=%s date=%s user_id=%s>' % (
             self.entries_id,
             self.call_sid,
-            self.rose_transcription_sid,
-            self.rose_recording_sid,
             self.thorn_transcription_sid,
             self.thorn_recording_sid,
+            self.rose_transcription_sid,
+            self.rose_recording_sid,
             self.rating,
             self.date,
             self.user_id
