@@ -15,7 +15,7 @@ def welcome():
     response = VoiceResponse()
     response.say(message="Welcome")
 
-    response.redirect("https://76e3bdbee915.ngrok.io/menu?step=rose")
+    response.redirect("https://42445d3159ec.ngrok.io/menu?step=rose")
 
     return twiml(response)
 
@@ -44,8 +44,8 @@ def get_rose(response):
     response.record(transcribe=True,
                     timeout=2,
                     maxLength=20,
-                    action="https://76e3bdbee915.ngrok.io/menu?step=thorn",
-                    transcribeCallback="https://76e3bdbee915.ngrok.io/update?step=rose")
+                    action="https://42445d3159ec.ngrok.io/menu?step=thorn",
+                    transcribeCallback="https://42445d3159ec.ngrok.io/update?step=rose")
 
     return twiml(response)
 
@@ -53,7 +53,7 @@ def get_rose(response):
 def get_rating(response):
     gather = Gather(input='dtmf',
                     num_digits=1,
-                    action="https://76e3bdbee915.ngrok.io/updaterating")
+                    action="https://42445d3159ec.ngrok.io/updaterating")
 
     gather.say('Rate the day from 1 to 5')
     response.append(gather)
@@ -66,8 +66,8 @@ def get_thorn(response):
     response.record(transcribe=True,
                     timeout=2,
                     maxLength=20,
-                    action="https://76e3bdbee915.ngrok.io/menu?step=rating",
-                    transcribeCallback="https://76e3bdbee915.ngrok.io/update?step=thorn")
+                    action="https://42445d3159ec.ngrok.io/menu?step=rating",
+                    transcribeCallback="https://42445d3159ec.ngrok.io/update?step=thorn")
 
     return twiml(response)
 
@@ -75,7 +75,7 @@ def get_thorn(response):
 def internal_redirect():
     response = VoiceResponse()
     response.say("Returning to the main menu")
-    response.redirect('https://76e3bdbee915.ngrok.io/welcome')
+    response.redirect('https://42445d3159ec.ngrok.io/welcome')
 
     return twiml(response)
 
