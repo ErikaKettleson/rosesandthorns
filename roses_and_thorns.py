@@ -11,9 +11,8 @@ phone_sid = "PN907d0cc74c6fe911d898db9f3b55230b"
 
 
 call = client.calls.create(
-                    url='https://b13852daa512.ngrok.io/welcome',
-                    to=erika_phone,
-                    from_=phone_number
-                )
+    url='https://76e3bdbee915.ngrok.io/welcome',
+    to=erika_phone,
+    from_=phone_number
+)
 print("call sid", call.sid)
-

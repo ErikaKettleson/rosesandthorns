@@ -2,7 +2,7 @@ from flask import Flask, request, redirect
 import flask
 import flask_sqlalchemy
 from twilio.twiml.voice_response import VoiceResponse, Gather, Record, Redirect
-from model import User, Entries
+from model import User, Entries, Ratings
 
 
 app = Flask(__name__)
@@ -15,7 +15,7 @@ def welcome():
     response = VoiceResponse()
     response.say(message="Welcome")
 
-    response.redirect("https://b13852daa512.ngrok.io/menu?step=rose")
+    response.redirect("https://76e3bdbee915.ngrok.io/menu?step=rose")
 
     return twiml(response)
 
@@ -44,8 +44,8 @@ def get_rose(response):
     response.record(transcribe=True,
                     timeout=2,
                     maxLength=20,
-                    action="https://b13852daa512.ngrok.io/menu?step=thorn",
-                    transcribeCallback="https://b13852daa512.ngrok.io/update?step=rose")
+                    action="https://76e3bdbee915.ngrok.io/menu?step=thorn",
+                    transcribeCallback="https://76e3bdbee915.ngrok.io/updaterose")
 
     return twiml(response)
 
@@ -53,7 +53,7 @@ def get_rose(response):
 def get_rating(response):
     gather = Gather(input='dtmf',
                     num_digits=1,
-                    action="https://b13852daa512.ngrok.io/update?step=rating")
+                    action="https://76e3bdbee915.ngrok.io/updaterating")
 
     gather.say('Rate the day from 1 to 5')
     response.append(gather)
@@ -66,8 +66,8 @@ def get_thorn(response):
     response.record(transcribe=True,
                     timeout=2,
                     maxLength=20,
-                    # action="https://b13852daa512.ngrok.io/menu?step=rating",
-                    transcribeCallback="https://b13852daa512.ngrok.io/update?step=thorn")
+                    action="https://76e3bdbee915.ngrok.io/menu?step=rating",
+                    transcribeCallback="https://76e3bdbee915.ngrok.io/updatethorn")
 
     return twiml(response)
 
@@ -75,7 +75,7 @@ def get_thorn(response):
 def internal_redirect():
     response = VoiceResponse()
     response.say("Returning to the main menu")
-    response.redirect('https://b13852daa512.ngrok.io/welcome')
+    response.redirect('https://76e3bdbee915.ngrok.io/welcome')
 
     return twiml(response)
 
@@ -85,6 +85,80 @@ def twiml(resp):
     resp.headers['Content-Type'] = 'text/xml'
 
     return resp
+
+
+@app.route('/updaterose', methods=['POST'])
+def updaterose():
+    call_sid = request.form['CallSid']
+    existing_call = Entries.query.filter_by(call_sid=call_sid).first()
+
+    transcription_sid = request.form['TranscriptionSid']
+    recording_sid = request.form['RecordingSid']
+    user = User.query.filter_by(phone_number=request.form['To']).first()
+
+    rose_new_entry = Entries(
+        transcription_sid=transcription_sid,
+        recording_sid=recording_sid,
+        entry_type="rose",
+        user_id=user.user_id,
+        call_sid=call_sid
+    )
+    # if not existing_call:
+    db.session.add(rose_new_entry)
+    db.session.commit()
+    # else:
+    #     existing_call.transcription_sid = transcription_sid
+    #     existing_call.recording_sid = recording_sid
+    #     db.session.commit()
+    return twiml(call_sid)
+
+
+@app.route('/updatethorn', methods=['POST'])
+def updatethorn():
+    call_sid = request.form['CallSid']
+    existing_call = Entries.query.filter_by(call_sid=call_sid).first()
+
+    transcription_sid = request.form['TranscriptionSid']
+    recording_sid = request.form['RecordingSid']
+    user = User.query.filter_by(phone_number=request.form['To']).first()
+
+    thorn_new_entry = Entries(
+        transcription_sid=transcription_sid,
+        recording_sid=recording_sid,
+        entry_type="thorn",
+        user_id=user.user_id,
+        call_sid=call_sid
+    )
+    # if not existing_call:
+    db.session.add(thorn_new_entry)
+    db.session.commit()
+    # else:
+    #     existing_call.transcription_sid = transcription_sid
+    #     existing_call.recording_sid = recording_sid
+    #     db.session.commit()
+    return twiml(call_sid)
+
+
+@app.route('/updaterating', methods=['POST'])
+def updaterating():
+    call_sid = request.form['CallSid']
+    existing_call = Ratings.query.filter_by(call_sid=call_sid).first()
+
+    user = User.query.filter_by(phone_number=request.form['To']).first()
+    rating = int(request.form['Digits'])
+
+    new_rating = Ratings(
+        rating=rating,
+        user_id=user.user_id,
+        call_sid=call_sid
+    )
+    if not existing_call:
+        db.session.add(new_rating)
+        db.session.commit()
+    else:
+        existing_call.rating = rating
+        db.session.commit()
+    return twiml(call_sid)
 
 
 @app.route('/update', methods=['POST'])
@@ -107,9 +181,20 @@ def update():
         )
         if not existing_call:
             db.session.add(rose_new_entry)
+            db.session.commit()
         else:
-            existing_call.rose_transcription_sid = rose_transcription_sid
-            existing_call.rose_recording_sid = rose_recording_sid
+            update = Entries(
+                rose_transcription_sid=rose_transcription_sid,
+                rose_recording_sid=rose_recording_sid,
+            )
+            db.session.merge(update)
+            db.session.commit()
+
+        # if not existing_call:
+        #     db.session.add(rose_new_entry)
+        # else:
+        #     existing_call.rose_transcription_sid = rose_transcription_sid
+        #     existing_call.rose_recording_sid = rose_recording_sid
     elif (step == 'thorn'):
         existing_call = Entries.query.filter_by(call_sid=call_sid).first()
         user = User.query.filter_by(phone_number=request.form['To']).first()
@@ -125,15 +210,19 @@ def update():
         )
         if not existing_call:
             db.session.add(new_entry)
+            db.session.commit()
         else:
             update = Entries(
                 thorn_transcription_sid=thorn_transcription_sid,
                 thorn_recording_sid=thorn_recording_sid,
             )
             db.session.merge(update)
+            db.session.commit()
+
             # existing_call.thorn_transcription_sid = thorn_transcription_sid
             # existing_call.thorn_recording_sid = thorn_recording_sid
             # print(existing_call)
+
     # elif (step == 'rating'):
     #     existing_call = Entries.query.filter_by(call_sid=call_sid).first()
     #     user = User.query.filter_by(phone_number=request.form['To']).first()
