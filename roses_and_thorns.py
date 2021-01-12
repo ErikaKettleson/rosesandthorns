@@ -15,7 +15,7 @@ phone_sid = "PN907d0cc74c6fe911d898db9f3b55230b"
 
 def make_call(num):
     call = client.calls.create(
-        url='https://42445d3159ec.ngrok.io/welcome',
+        url=' https://fb24a088b870.ngrok.io/welcome',
         to=num,
         from_=phone_number
     )

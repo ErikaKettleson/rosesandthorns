@@ -10,12 +10,25 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
 db = flask_sqlalchemy.SQLAlchemy(app)
 
 
+@app.route('/user', methods=['POST'])
+def add_user():
+    phone_number = request.form['PhoneNumber']
+
+    new_user = User(
+        phone_number=phone_number,
+    )
+    db.session.add(new_user)
+    db.session.commit()
+
+    return "added user"
+
+
 @app.route('/welcome', methods=['POST'])
 def welcome():
     response = VoiceResponse()
     response.say(message="Welcome")
 
-    response.redirect("https://42445d3159ec.ngrok.io/menu?step=rose")
+    response.redirect(" https://fb24a088b870.ngrok.io/menu?step=rose")
 
     return twiml(response)
 
@@ -44,8 +57,8 @@ def get_rose(response):
     response.record(transcribe=True,
                     timeout=2,
                     maxLength=20,
-                    action="https://42445d3159ec.ngrok.io/menu?step=thorn",
-                    transcribeCallback="https://42445d3159ec.ngrok.io/update?step=rose")
+                    action=" https://fb24a088b870.ngrok.io/menu?step=thorn",
+                    transcribeCallback=" https://fb24a088b870.ngrok.io/update?step=rose")
 
     return twiml(response)
 
@@ -53,7 +66,7 @@ def get_rose(response):
 def get_rating(response):
     gather = Gather(input='dtmf',
                     num_digits=1,
-                    action="https://42445d3159ec.ngrok.io/updaterating")
+                    action=" https://fb24a088b870.ngrok.io/updaterating")
 
     gather.say('Rate the day from 1 to 5')
     response.append(gather)
@@ -66,8 +79,8 @@ def get_thorn(response):
     response.record(transcribe=True,
                     timeout=2,
                     maxLength=20,
-                    action="https://42445d3159ec.ngrok.io/menu?step=rating",
-                    transcribeCallback="https://42445d3159ec.ngrok.io/update?step=thorn")
+                    action=" https://fb24a088b870.ngrok.io/menu?step=rating",
+                    transcribeCallback=" https://fb24a088b870.ngrok.io/update?step=thorn")
 
     return twiml(response)
 
@@ -75,7 +88,7 @@ def get_thorn(response):
 def internal_redirect():
     response = VoiceResponse()
     response.say("Returning to the main menu")
-    response.redirect('https://42445d3159ec.ngrok.io/welcome')
+    response.redirect(' https://fb24a088b870.ngrok.io/welcome')
 
     return twiml(response)
 
@@ -87,7 +100,7 @@ def twiml(resp):
     return resp
 
 
-@ app.route('/update', methods=['POST'])
+@app.route('/update', methods=['POST'])
 def update():
     step = request.args.get('step')
     call_sid = request.form['CallSid']
@@ -108,7 +121,7 @@ def update():
     return twiml(call_sid)
 
 
-@ app.route('/updaterating', methods=['POST'])
+@app.route('/updaterating', methods=['POST'])
 def updaterating():
     call_sid = request.form['CallSid']
     existing_call = Ratings.query.filter_by(call_sid=call_sid).first()
